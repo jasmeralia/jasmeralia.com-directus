@@ -901,6 +901,10 @@ const progressGames = await directusFetchItems("games", {
   limit: -1,
 });
 const sectionNoProgressCount = (progressGames ?? []).filter(isSectionDataPresentNoProgress).length;
+const sectionNoProgressActiveCount = (progressGames ?? []).filter((game) =>
+  (game.player_status === "in_progress" || game.player_status === "on_hold")
+  && isSectionDataPresentNoProgress(game),
+).length;
 const partialProgressCount = (progressGames ?? []).filter((game) => {
   if (game.player_status === "waiting_for_update") return false;
   const percent = (bundleProgressSummary(game) ?? sectionProgressSummary(game))?.percent;
@@ -1156,6 +1160,7 @@ const dataCurationFilterEntries = [
     })),
   { label: "Section Data Present + Incomplete Progress (By Percent)", href: "/filters/section-style/incomplete-progress/index.html", count: partialProgressCount },
   { label: "Section Data Present + No Progress", href: "/filters/section-style/no-progress/index.html", count: sectionNoProgressCount },
+  { label: "Section Data Present + No Progress (In Progress or On Hold)", href: "/filters/section-style/no-progress-in-progress/index.html", count: sectionNoProgressActiveCount },
   ...genreTierCoverageEntries.map((entry) => ({
     label: `Tier List: ${entry.tierListTitle} - Missing + Genre: ${entry.genreName}`,
     href: `/filters/misc/genre-not-in-tier/${entry.genreSlug}/index.html`,
