@@ -90,6 +90,7 @@ const rows = games.map((game) => {
   const orion = installs("orion");
   const typhoonVersions = new Set(typhoon.map((install) => install.version));
   const orionVersions = new Set(orion.map((install) => install.version));
+  const orionHasVersion = orion.some((install) => install.version !== null);
   return {
     game,
     gslValue,
@@ -98,7 +99,8 @@ const rows = games.map((game) => {
     gslUrl: gslLink?.url ?? null,
     typhoon,
     orion,
-    installVersionsDiffer: typhoon.length > 0 && orion.length > 0 && (
+    installMismatchWarning: orionHasVersion && (
+      typhoon.length === 0 ||
       typhoonVersions.size !== orionVersions.size || [...typhoonVersions].some((version) => !orionVersions.has(version))
     ),
     links: downloadLinksByDomain(game.links).map((link) => ({ url: link.url, meta: getLinkMeta(link) })),
@@ -200,7 +202,7 @@ const hasPreview = hasComparison("preview");
                 <div class="row" role="row">
                   <div class="cell title" role="cell">
                     <div class="line">
-                      {row.installVersionsDiffer ? (
+                      {row.installMismatchWarning ? (
                         <svg class="install-warning" viewBox="0 0 16 16" role="img" aria-label="Typhoon and Orion versions do not match" title="Typhoon and Orion versions do not match">
                           <path d="M8 1.4 15 14H1L8 1.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
                           <path d="M8 5v4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
