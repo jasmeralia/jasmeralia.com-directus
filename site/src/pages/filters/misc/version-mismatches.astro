@@ -86,14 +86,21 @@ const rows = games.map((game) => {
             : null,
         ].filter(Boolean).join("\n") || null,
       }));
+  const typhoon = installs("typhoon");
+  const orion = installs("orion");
+  const typhoonVersions = new Set(typhoon.map((install) => install.version));
+  const orionVersions = new Set(orion.map((install) => install.version));
   return {
     game,
     gslValue,
     gslReleaseDate: gsl?.release_date ?? null,
     gslUpdatedRecently: isRecentGslRelease(gsl?.release_date),
     gslUrl: gslLink?.url ?? null,
-    typhoon: installs("typhoon"),
-    orion: installs("orion"),
+    typhoon,
+    orion,
+    installVersionsDiffer: typhoon.length > 0 && orion.length > 0 && (
+      typhoonVersions.size !== orionVersions.size || [...typhoonVersions].some((version) => !orionVersions.has(version))
+    ),
     links: downloadLinksByDomain(game.links).map((link) => ({ url: link.url, meta: getLinkMeta(link) })),
   };
 });
@@ -127,6 +134,7 @@ const hasPreview = hasComparison("preview");
       .status-slot{flex:none;width:9px;height:9px;}
       .status-dot{display:block;width:9px;height:9px;border-radius:50%;box-sizing:border-box;}
       .status-dot.is-hollow{background:transparent !important;border:1.5px solid;}
+      .install-warning{flex:none;width:14px;height:14px;color:#e8b63f;}
       .na{font-style:italic;font-size:.8rem;opacity:.5;}
       .icon{flex:none;width:15px;height:15px;}
       .icon.is-current{color:#3fb96b;}
@@ -192,6 +200,13 @@ const hasPreview = hasComparison("preview");
                 <div class="row" role="row">
                   <div class="cell title" role="cell">
                     <div class="line">
+                      {row.installVersionsDiffer ? (
+                        <svg class="install-warning" viewBox="0 0 16 16" role="img" aria-label="Typhoon and Orion versions do not match" title="Typhoon and Orion versions do not match">
+                          <path d="M8 1.4 15 14H1L8 1.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                          <path d="M8 5v4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                          <circle cx="8" cy="11.5" r=".85" fill="currentColor" />
+                        </svg>
+                      ) : null}
                       <span class="status-slot">
                         {STATUS_COLORS[status] ? (
                           <span
