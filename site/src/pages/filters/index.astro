@@ -419,6 +419,19 @@ const sectionDataPlayedEntries = Array.from(sectionDataPlayedCounts.entries())
   .sort((a, b) =>
     compareLabels(a.stateLabel, b.stateLabel) ||
     compareLabels(a.statusLabel, b.statusLabel));
+const sectionDataMissingStartedCount = (games ?? []).filter((game) =>
+  sectionDataState(game) === "missing" &&
+  ["in_progress", "on_hold"].includes(game.player_status),
+).length;
+if (sectionDataMissingStartedCount > 0) {
+  sectionDataPlayedEntries.push({
+    state: "missing",
+    status: "started",
+    count: sectionDataMissingStartedCount,
+    stateLabel: "Missing",
+    statusLabel: "Started",
+  });
+}
 
 const sectionDataGenreEntries = Array.from(sectionDataGenreTotalCounts.entries())
   .map(([key, totalCount]) => {
@@ -1443,7 +1456,7 @@ const chartCount = [
         <ul>
           {sectionDataPlayedEntries.map((entry) => (
             <li>
-              <a href={`/filters/section-data/${entry.state}/played_status/${entry.status}/index.html`}>Section Data {entry.stateLabel} + {entry.statusLabel}</a>
+              <a href={`/filters/section-data/${entry.state}/played_status/${entry.status}/index.html`}>{entry.status === "started" ? "Section Data Missing + Started" : `Section Data ${entry.stateLabel} + ${entry.statusLabel}`}</a>
               <span style="opacity:.7;"> ({entry.count})</span>
             </li>
           ))}
