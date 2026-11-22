@@ -29,6 +29,13 @@ export async function getStaticPaths() {
     comboCounts.set(key, (comboCounts.get(key) || 0) + 1);
   }
 
+  if ((games ?? []).some((game) =>
+    sectionDataState(game) === "missing" &&
+    ["in_progress", "on_hold"].includes(game.player_status),
+  )) {
+    comboCounts.set("missing::started", 1);
+  }
+
   return Array.from(comboCounts.keys()).map((key) => {
     const [state, status] = key.split("::");
     return { params: { state, status } };
@@ -40,15 +47,23 @@ const labelize = (value) =>
   value ? value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "";
 const stateLabel = labelize(state);
 const playerStatusLabels = await directusFieldChoiceMap("games", "player_status");
-const statusLabel = playerStatusLabels.get(status) ?? labelize(status);
+const isStartedFilter = status === "started";
+const statusLabel = isStartedFilter ? "Started" : (playerStatusLabels.get(status) ?? labelize(status));
 
 const gamesForStatus = await directusFetchItems("games", {
   fields: GAME_THUMB_FIELDS,
-  filter: { player_status: { _eq: status } },
+  filter: {
+    player_status: isStartedFilter
+      ? { _in: ["in_progress", "on_hold"] }
+      : { _eq: status },
+  },
   limit: -1,
 });
 
-let games = gamesForStatus.filter((game) => sectionDataState(game) === state);
+let games = gamesForStatus.filter((game) =>
+  sectionDataState(game) === state &&
+  (!isStartedFilter || ["in_progress", "on_hold"].includes(game.player_status)),
+);
 games = sortByTitle(games);
 
 const gameIds = games.map((game) => game.id).filter((id) => typeof id === "number");
@@ -74,7 +89,7 @@ const csvHref = csvDataUri(gamesToCsv(games));
   </div>
   <main>
     <div class="panel">
-      <CsvHeader title={`Section Data: ${stateLabel} + ${statusLabel}`} count={games.length} csvHref={csvHref} csvName={csvName} />
+      <CsvHeader title={`Section Data ${stateLabel} + ${statusLabel}`} count={games.length} csvHref={csvHref} csvName={csvName} />
       <p>
         Section data: <strong>{stateLabel}</strong> &nbsp;|&nbsp;
         Played status: <strong>{statusLabel}</strong>
