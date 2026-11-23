@@ -123,6 +123,7 @@ const hasPreview = hasComparison("preview");
       .legend span{display:inline-flex;align-items:center;gap:5px;}
       .grid{border-top:1px solid #222;font-size:.9rem;}
       .row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.5fr) minmax(0,1.35fr) minmax(0,1.35fr) 90px;gap:0 12px;align-items:center;min-height:31px;padding:2px 6px;border-bottom:1px solid #222;}
+      .row[hidden]{display:none;}
       .row.head{min-height:30px;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.7;background:#141414;}
       .row:not(.head):hover{background:#161616;}
       .cell{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;}
@@ -147,6 +148,10 @@ const hasPreview = hasComparison("preview");
       .links{display:flex;align-items:center;justify-content:flex-end;gap:.45rem;}
       .links img{width:1.05rem;height:1.05rem;display:block;}
       .links .platform-icon{filter:brightness(0) saturate(100%) invert(67%) sepia(11%) saturate(1832%) hue-rotate(194deg) brightness(97%) contrast(96%);}
+      .links .directus-edit{filter:brightness(0) saturate(100%) invert(67%) sepia(11%) saturate(1832%) hue-rotate(194deg) brightness(97%) contrast(96%);}
+      .filters{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:.9rem;}
+      .filters input{accent-color:#81d9a8;}
+      .filter-count{opacity:.65;font-variant-numeric:tabular-nums;}
       .recent-badge{display:inline-flex;flex:none;align-items:center;border:1px solid #4da879;border-radius:3px;padding:1px 4px;color:#81d9a8;background:#173323;font-size:.62rem;font-weight:700;letter-spacing:.04em;line-height:1.3;text-transform:uppercase;}
       .label{display:none;}
       @media (max-width:760px){
@@ -160,12 +165,17 @@ const hasPreview = hasComparison("preview");
   </div>
   <main>
     <div class="list">
-      <h1>AVN - Version Mismatches <span style="opacity:.6;font-size:.8em;">({games.length})</span></h1>
+      <h1>AVN - Version Mismatches <span id="version-mismatch-count" style="opacity:.6;font-size:.8em;">({games.length})</span></h1>
       <p>A game appears here when an active Orion or Typhoon installation is behind the current GameStoryLog version. Every active installation is shown separately.</p>
       {games.length === 0 ? (
         <p>No tracked game versions currently differ.</p>
       ) : (
         <>
+          <div class="filters">
+            <label><input id="recent-gsl-filter" type="checkbox" /> Only show games with a GSL version updated in the last 14 days</label>
+            <label><input id="recorded-orion-filter" type="checkbox" /> Only show games with a recorded Orion version</label>
+            <span id="version-mismatch-filter-count" class="filter-count" aria-live="polite"></span>
+          </div>
           <svg width="0" height="0" style="position:absolute" aria-hidden="true">
             <defs>
               <g id="vm-current"><circle cx="8" cy="8" r="7.5" fill="currentColor" opacity=".18"/><path d="M4.6 8.3l2.3 2.3 4.5-4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
@@ -199,7 +209,7 @@ const hasPreview = hasComparison("preview");
             {rows.map((row) => {
               const status = row.game.player_status;
               return (
-                <div class="row" role="row">
+                <div class="row" role="row" data-gsl-updated-recently={row.gslUpdatedRecently ? "true" : "false"} data-has-recorded-orion={row.orion.some((install) => install.version !== null) ? "true" : "false"}>
                   <div class="cell title" role="cell">
                     <div class="line">
                       {row.installMismatchWarning ? (
@@ -261,6 +271,9 @@ const hasPreview = hasComparison("preview");
                           </a>
                         ) : null
                       ))}
+                      <a href={`https://directus.jasmer.tools/admin/content/games/${row.game.id}`} rel="noopener noreferrer" target="_blank" aria-label="Edit in Directus" title="Edit in Directus">
+                        <img class="directus-edit" src="/icons/pencil.svg" alt="" loading="lazy" />
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -272,3 +285,27 @@ const hasPreview = hasComparison("preview");
     </div>
   </main>
 </BaseLayout>
+
+<script is:inline>
+  const recentGslFilter = document.querySelector("#recent-gsl-filter");
+  const recordedOrionFilter = document.querySelector("#recorded-orion-filter");
+  if (recentGslFilter && recordedOrionFilter) {
+    const mismatchRows = [...document.querySelectorAll(".grid > .row:not(.head)")];
+    const count = document.querySelector("#version-mismatch-count");
+    const filterCount = document.querySelector("#version-mismatch-filter-count");
+    const updateRows = () => {
+      let visible = 0;
+      for (const row of mismatchRows) {
+        const matchesRecentGsl = !recentGslFilter.checked || row.dataset.gslUpdatedRecently === "true";
+        const matchesRecordedOrion = !recordedOrionFilter.checked || row.dataset.hasRecordedOrion === "true";
+        const show = matchesRecentGsl && matchesRecordedOrion;
+        row.hidden = !show;
+        if (show) visible += 1;
+      }
+      if (count) count.textContent = `(${visible})`;
+      if (filterCount) filterCount.textContent = recentGslFilter.checked || recordedOrionFilter.checked ? `${visible} games` : "";
+    };
+    recentGslFilter.addEventListener("change", updateRows);
+    recordedOrionFilter.addEventListener("change", updateRows);
+  }
+</script>
