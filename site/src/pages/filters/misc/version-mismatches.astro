@@ -91,6 +91,12 @@ const rows = games.map((game) => {
   const typhoonVersions = new Set(typhoon.map((install) => install.version));
   const orionVersions = new Set(orion.map((install) => install.version));
   const orionHasVersion = orion.some((install) => install.version !== null);
+  const recordedTyphoonVersions = new Set(typhoon.map((install) => install.version).filter((version) => version !== null));
+  const recordedOrionVersions = new Set(orion.map((install) => install.version).filter((version) => version !== null));
+  const hasDifferentRecordedInstallVersions = recordedTyphoonVersions.size > 0 && recordedOrionVersions.size > 0 && (
+    recordedTyphoonVersions.size !== recordedOrionVersions.size ||
+    [...recordedTyphoonVersions].some((version) => !recordedOrionVersions.has(version))
+  );
   return {
     game,
     gslValue,
@@ -99,6 +105,7 @@ const rows = games.map((game) => {
     gslUrl: gslLink?.url ?? null,
     typhoon,
     orion,
+    hasDifferentRecordedInstallVersions,
     installMismatchWarning: orionHasVersion && (
       typhoon.length === 0 ||
       typhoonVersions.size !== orionVersions.size || [...typhoonVersions].some((version) => !orionVersions.has(version))
@@ -172,8 +179,10 @@ const hasPreview = hasComparison("preview");
       ) : (
         <>
           <div class="filters">
-            <label><input id="recent-gsl-filter" type="checkbox" /> Only show games with a GSL version updated in the last 14 days</label>
-            <label><input id="recorded-orion-filter" type="checkbox" /> Only show games with a recorded Orion version</label>
+            <span>Only show games with:</span>
+            <label><input id="recent-gsl-filter" type="checkbox" /> a GSL version updated in the last 14 days</label>
+            <label><input id="recorded-orion-filter" type="checkbox" /> a recorded Orion version</label>
+            <label><input id="different-install-versions-filter" type="checkbox" /> different recorded Orion and Typhoon versions</label>
             <span id="version-mismatch-filter-count" class="filter-count" aria-live="polite"></span>
           </div>
           <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -209,7 +218,7 @@ const hasPreview = hasComparison("preview");
             {rows.map((row) => {
               const status = row.game.player_status;
               return (
-                <div class="row" role="row" data-gsl-updated-recently={row.gslUpdatedRecently ? "true" : "false"} data-has-recorded-orion={row.orion.some((install) => install.version !== null) ? "true" : "false"}>
+                <div class="row" role="row" data-gsl-updated-recently={row.gslUpdatedRecently ? "true" : "false"} data-has-recorded-orion={row.orion.some((install) => install.version !== null) ? "true" : "false"} data-has-different-recorded-install-versions={row.hasDifferentRecordedInstallVersions ? "true" : "false"}>
                   <div class="cell title" role="cell">
                     <div class="line">
                       {row.installMismatchWarning ? (
@@ -289,7 +298,8 @@ const hasPreview = hasComparison("preview");
 <script is:inline>
   const recentGslFilter = document.querySelector("#recent-gsl-filter");
   const recordedOrionFilter = document.querySelector("#recorded-orion-filter");
-  if (recentGslFilter && recordedOrionFilter) {
+  const differentInstallVersionsFilter = document.querySelector("#different-install-versions-filter");
+  if (recentGslFilter && recordedOrionFilter && differentInstallVersionsFilter) {
     const mismatchRows = [...document.querySelectorAll(".grid > .row:not(.head)")];
     const count = document.querySelector("#version-mismatch-count");
     const filterCount = document.querySelector("#version-mismatch-filter-count");
@@ -298,14 +308,16 @@ const hasPreview = hasComparison("preview");
       for (const row of mismatchRows) {
         const matchesRecentGsl = !recentGslFilter.checked || row.dataset.gslUpdatedRecently === "true";
         const matchesRecordedOrion = !recordedOrionFilter.checked || row.dataset.hasRecordedOrion === "true";
-        const show = matchesRecentGsl && matchesRecordedOrion;
+        const matchesDifferentInstallVersions = !differentInstallVersionsFilter.checked || row.dataset.hasDifferentRecordedInstallVersions === "true";
+        const show = matchesRecentGsl && matchesRecordedOrion && matchesDifferentInstallVersions;
         row.hidden = !show;
         if (show) visible += 1;
       }
       if (count) count.textContent = `(${visible})`;
-      if (filterCount) filterCount.textContent = recentGslFilter.checked || recordedOrionFilter.checked ? `${visible} games` : "";
+      if (filterCount) filterCount.textContent = recentGslFilter.checked || recordedOrionFilter.checked || differentInstallVersionsFilter.checked ? `${visible} games` : "";
     };
     recentGslFilter.addEventListener("change", updateRows);
     recordedOrionFilter.addEventListener("change", updateRows);
+    differentInstallVersionsFilter.addEventListener("change", updateRows);
   }
 </script>
