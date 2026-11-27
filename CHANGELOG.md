@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.295] - 2026-11-27
+- Games: display optional estimated render counts after linear visual-novel / AVN section titles.
+
 ## [1.0.294] - 2026-11-18
 - RSS: omit GSL playtime and tag metadata from game update descriptions so metadata refreshes do not produce raw field names or `[object Object]` in feed readers and Discord.
 
