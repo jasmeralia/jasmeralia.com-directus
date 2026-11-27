@@ -6,10 +6,11 @@ import { artFields, artTabFields, buildArtTab, coverImage } from "../../lib/game
 import { downloadLinks, otherLinks, otherLinkText, walkthroughLinks, walkthroughTextNotes, getLinkMeta, steamDbAppUrl } from "../../lib/download-link";
 import { buildGameHistory } from "../../lib/game-history";
 import { effectiveSectionStyle, orderedBundleMembers } from "../../lib/game-bundles";
-import { directGameSections, directGameSectionsByPosition, groupSectionsByCategory, isSectionCategoryComplete, isSectionComplete, orderedSections, pluralizeNoun, sectionNoun, sectionProgressSummary } from "../../lib/game-sections";
+import { directGameSections, directGameSectionsByPosition, groupSectionsByCategory, isSectionCategoryComplete, isSectionComplete, orderedSections, pluralizeNoun, sectionNoun, sectionProgressSummary, sectionTitleWithRenderCount } from "../../lib/game-sections";
 import { fetchActivity, fetchRevisions } from "../../lib/changelog";
 import { compareLabels } from "../../lib/list-format";
 import { isGameNsfw } from "../../lib/nsfw";
+import { hasGenreMembership } from "../../lib/genre-supersets";
 import GameSectionProgress from "../../components/GameSectionProgress.astro";
 import PlaceholderRibbon from "../../components/PlaceholderRibbon.astro";
 import { buildVersionsTab, effectiveVersion } from "../../lib/game-versions";
@@ -68,6 +69,7 @@ export async function getStaticPaths() {
     'sections.number',
     'sections.sort',
     'sections.title',
+    'sections.render_count',
     'sections.category',
     'sections.completed',
     'sections.is_ending',
@@ -101,12 +103,14 @@ export async function getStaticPaths() {
     'bundle_members.sections.id',
     'bundle_members.sections.number',
     'bundle_members.sections.title',
+    'bundle_members.sections.render_count',
     'bundle_members.sections.category',
     'bundle_members.sections.completed',
     'bundle_members.source_game_id.id',
     'bundle_members.source_game_id.title',
     'bundle_members.source_game_id.slug',
     'bundle_members.source_game_id.release_year',
+    'bundle_members.source_game_id.genres.genres_id.slug',
     ...artFields('bundle_members.source_game_id.'),
     'included_in_bundles.id',
     'included_in_bundles.games_id.id',
@@ -306,6 +310,10 @@ function gameSynopsis(title: string, gameStatus: string | null | undefined, play
 const metaDescription = gameSynopsis(game.title, game.game_status, game.player_status);
 
 const noun = sectionNoun(game.section_noun);
+const gameGenreSlugs = (game.genres ?? [])
+  .map((entry) => entry?.genres_id?.slug)
+  .filter((slug) => typeof slug === "string");
+const gameHasVisualNovelGenre = hasGenreMembership(gameGenreSlugs, "visual-novel");
 const current = game.current_section ?? null;
 const sectionStyle = effectiveSectionStyle(game);
 const isNonlinear = game.section_style === "nonlinear";
@@ -828,6 +836,10 @@ const coverStackStyle = [
               const memberSectionGroups = groupSectionsByCategory(memberSections);
               const memberHasCategories = memberSections.some((section) => Boolean(section.category));
               const memberNoun = sectionNoun(member.section_noun);
+              const memberGenreSlugs = (source?.genres ?? [])
+                .map((entry) => entry?.genres_id?.slug)
+                .filter((slug) => typeof slug === "string");
+              const memberHasVisualNovelGenre = hasGenreMembership(memberGenreSlugs, "visual-novel");
               const memberCurrent = member.current_section ?? null;
               const sectionStatus = member.section_data_status ?? "unknown";
               const memberProgress = sectionProgressSummary(member, { nested: true });
@@ -897,7 +909,7 @@ const coverStackStyle = [
                                   }}
                                   aria-current={section.number === memberCurrent ? "step" : undefined}
                                 >
-                                  {section.title}
+                                  {sectionTitleWithRenderCount(section, memberHasVisualNovelGenre)}
                                 </li>
                               ))}
                             </ol>
@@ -913,7 +925,7 @@ const coverStackStyle = [
                               }}
                               aria-current={section.number === memberCurrent ? "step" : undefined}
                             >
-                              {section.title}
+                              {sectionTitleWithRenderCount(section, memberHasVisualNovelGenre)}
                             </li>
                           ))}
                         </ol>
@@ -989,7 +1001,7 @@ const coverStackStyle = [
                       }}
                       aria-current={section.number === current ? "step" : undefined}
                     >
-                      {section.title}
+                      {sectionTitleWithRenderCount(section, gameHasVisualNovelGenre)}
                     </li>
                   ))}
                 </ol>
@@ -1005,7 +1017,7 @@ const coverStackStyle = [
                   }}
                   aria-current={section.number === current ? "step" : undefined}
                 >
-                  {section.title}
+                  {sectionTitleWithRenderCount(section, gameHasVisualNovelGenre)}
                 </li>
               ))}
             </ol>

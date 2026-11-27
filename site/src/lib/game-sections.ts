@@ -3,6 +3,7 @@ export type GameSection = {
   number: number;
   sort?: number | null;
   title: string;
+  render_count?: number | null;
   category?: string | null;
   completed?: boolean | null;
   is_ending?: boolean | null;
@@ -12,6 +13,16 @@ export type GameSection = {
 
 export const sectionNoun = (raw: string | null | undefined): string =>
   raw || "Chapter";
+
+export const sectionTitleWithRenderCount = (
+  section: GameSection,
+  includeRenderCount: boolean,
+): string => includeRenderCount
+  && typeof section.render_count === "number"
+  && Number.isInteger(section.render_count)
+  && section.render_count >= 0
+  ? `${section.title} (~${section.render_count} renders)`
+  : section.title;
 
 export const pluralizeNoun = (noun: string): string =>
   /[^aeiou]y$/i.test(noun) ? `${noun.slice(0, -1)}ies` : `${noun}s`;
