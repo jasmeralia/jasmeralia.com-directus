@@ -6,7 +6,7 @@ import { artFields, artTabFields, buildArtTab, coverImage } from "../../lib/game
 import { downloadLinks, otherLinks, otherLinkText, walkthroughLinks, walkthroughTextNotes, getLinkMeta, steamDbAppUrl } from "../../lib/download-link";
 import { buildGameHistory } from "../../lib/game-history";
 import { effectiveSectionStyle, orderedBundleMembers } from "../../lib/game-bundles";
-import { directGameSections, directGameSectionsByPosition, groupSectionsByCategory, isSectionCategoryComplete, isSectionComplete, orderedSections, pluralizeNoun, sectionNoun, sectionProgressSummary, sectionTitleWithRenderCount } from "../../lib/game-sections";
+import { directGameSections, directGameSectionsByPosition, groupSectionsByCategory, isSectionCategoryComplete, isSectionComplete, orderedSections, pluralizeNoun, sectionNoun, sectionProgressSummary, sectionRenderCountLabel } from "../../lib/game-sections";
 import { fetchActivity, fetchRevisions } from "../../lib/changelog";
 import { compareLabels } from "../../lib/list-format";
 import { isGameNsfw } from "../../lib/nsfw";
@@ -504,6 +504,7 @@ const coverStackStyle = [
       .sections-list li{padding:.2rem .5rem;border-left:2px solid transparent;}
       .sections-list .current-section{color:#8c58ff;border-left-color:#8c58ff;font-weight:700;}
       .sections-list .section-completed{opacity:.6;text-decoration:line-through;}
+      .section-render-count{font-size:.8em;opacity:.72;}
       .quest-category{margin-top:1rem;}
       .quest-category:first-child{margin-top:.5rem;}
       .quest-category-title{margin:0 0 .3rem;font-size:.85rem;opacity:.8;text-transform:uppercase;letter-spacing:.06em;}
@@ -909,7 +910,7 @@ const coverStackStyle = [
                                   }}
                                   aria-current={section.number === memberCurrent ? "step" : undefined}
                                 >
-                                  {sectionTitleWithRenderCount(section, memberHasVisualNovelGenre)}
+                                  {section.title}{sectionRenderCountLabel(section, memberHasVisualNovelGenre) ? <span class="section-render-count"> {sectionRenderCountLabel(section, memberHasVisualNovelGenre)}</span> : null}
                                 </li>
                               ))}
                             </ol>
@@ -925,7 +926,7 @@ const coverStackStyle = [
                               }}
                               aria-current={section.number === memberCurrent ? "step" : undefined}
                             >
-                              {sectionTitleWithRenderCount(section, memberHasVisualNovelGenre)}
+                              {section.title}{sectionRenderCountLabel(section, memberHasVisualNovelGenre) ? <span class="section-render-count"> {sectionRenderCountLabel(section, memberHasVisualNovelGenre)}</span> : null}
                             </li>
                           ))}
                         </ol>
@@ -1001,7 +1002,7 @@ const coverStackStyle = [
                       }}
                       aria-current={section.number === current ? "step" : undefined}
                     >
-                      {sectionTitleWithRenderCount(section, gameHasVisualNovelGenre)}
+                      {section.title}{sectionRenderCountLabel(section, gameHasVisualNovelGenre) ? <span class="section-render-count"> {sectionRenderCountLabel(section, gameHasVisualNovelGenre)}</span> : null}
                     </li>
                   ))}
                 </ol>
@@ -1017,7 +1018,7 @@ const coverStackStyle = [
                   }}
                   aria-current={section.number === current ? "step" : undefined}
                 >
-                  {sectionTitleWithRenderCount(section, gameHasVisualNovelGenre)}
+                  {section.title}{sectionRenderCountLabel(section, gameHasVisualNovelGenre) ? <span class="section-render-count"> {sectionRenderCountLabel(section, gameHasVisualNovelGenre)}</span> : null}
                 </li>
               ))}
             </ol>
