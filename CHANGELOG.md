@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.296] - 2026-11-27
+- Games: display estimated render counts in smaller, subdued text after section titles.
+
 ## [1.0.295] - 2026-11-27
 - Games: display optional estimated render counts after linear visual-novel / AVN section titles.
 

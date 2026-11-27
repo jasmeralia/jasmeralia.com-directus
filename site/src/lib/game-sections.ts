@@ -14,15 +14,15 @@ export type GameSection = {
 export const sectionNoun = (raw: string | null | undefined): string =>
   raw || "Chapter";
 
-export const sectionTitleWithRenderCount = (
+export const sectionRenderCountLabel = (
   section: GameSection,
   includeRenderCount: boolean,
-): string => includeRenderCount
+): string | null => includeRenderCount
   && typeof section.render_count === "number"
   && Number.isInteger(section.render_count)
   && section.render_count >= 0
-  ? `${section.title} (~${section.render_count} renders)`
-  : section.title;
+  ? `(~${section.render_count} renders)`
+  : null;
 
 export const pluralizeNoun = (noun: string): string =>
   /[^aeiou]y$/i.test(noun) ? `${noun.slice(0, -1)}ies` : `${noun}s`;
